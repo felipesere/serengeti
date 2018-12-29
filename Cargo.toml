@@ -1,0 +1,7 @@
+[workspace]
+
+members = [
+  "voter-registry",
+  "voting-server",
+  "client"
+]

@@ -1,0 +1,9 @@
+[package]
+name = "voter-registry"
+version = "0.1.0"
+authors = ["Felipe Sere <felipesere@gmail.com>"]
+edition = "2018"
+
+[dependencies]
+ring = "0.13.5"
+rocket = "0.4.0"
