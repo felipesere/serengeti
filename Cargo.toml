@@ -3,5 +3,6 @@
 members = [
   "voter-registry",
   "voting-server",
-  "client"
+  "client",
+  "shared"
 ]
