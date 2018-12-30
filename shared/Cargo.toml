@@ -5,3 +5,8 @@ authors = ["Felipe Sere <felipesere@gmail.com>"]
 edition = "2018"
 
 [dependencies]
+serde = "1.0.83"
+serde_derive = "1.0.83"
+ring = "0.13.5"
+base64 = "0.10.0"
+untrusted = "0.6.2"

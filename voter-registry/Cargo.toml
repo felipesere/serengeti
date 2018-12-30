@@ -12,3 +12,4 @@ rocket_contrib = "0.4.0"
 serde = "1.0.83"
 serde_derive = "1.0.83"
 base64 = "0.10.0"
+shared = {path = "../shared"}
