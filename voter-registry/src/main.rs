@@ -16,13 +16,9 @@ use serde_json;
 use std::io::Read;
 use rocket::outcome::Outcome::Failure;
 use rocket::outcome::Outcome::Success;
+use core::borrow::BorrowMut;
+use std::sync::Mutex;
 
-#[post("/voter_list", data = "<key>")]
-fn register_new_voter(key: SomePublicKey) -> &'static str {
-    println!("{:?}", key);
-
-    "well done"
-}
 
 #[derive(Debug, Deserialize)]
 pub struct SomePublicKey {
@@ -46,6 +42,16 @@ impl FromDataSimple for SomePublicKey {
     }
 }
 
+#[post("/voter_list", data = "<key>")]
+fn register_new_voter(key: SomePublicKey, existing_keys: State<VotersPubKey>) -> &'static str {
+    println!("{:?}", key);
+
+    existing_keys.lock().map(|mut x| x.push(key));
+
+
+    "well done"
+}
+
 #[get("/voter_list")]
 fn index(registry_keys: State<VoterRegistryKeys>) -> Json<RegisteredVoters> {
 
@@ -59,8 +65,13 @@ fn index(registry_keys: State<VoterRegistryKeys>) -> Json<RegisteredVoters> {
     Json(RegisteredVoters { signature, public_keys })
 }
 
+type VotersPubKey = Mutex<Vec<SomePublicKey>>;
+
 fn main() {
+    let existing_keys: VotersPubKey = Mutex::new(Vec::new());
+
     rocket::ignite()
+        .manage(existing_keys)
         .manage(VoterRegistryKeys::new())
         .mount("/", routes![index, register_new_voter])
         .launch();
