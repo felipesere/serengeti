@@ -29,7 +29,7 @@ pub struct VoterRegistryKeys {
 }
 
 impl VoterRegistryKeys {
-    pub fn sign<'a>(&self, keys: &[VoterPublicKeys]) -> Signature {
+    pub fn sign(&self, keys: &[VoterPublicKeys]) -> Signature {
         let mut msg = String::new();
         for key in keys {
             msg.push_str(key.value.as_ref())
@@ -39,22 +39,11 @@ impl VoterRegistryKeys {
     }
 
     pub fn new() -> Self {
-        generate_initial_keypair()
+        let random = SystemRandom::new();
+
+        let pkcs = Ed25519KeyPair::generate_pkcs8(&random).unwrap();
+
+        VoterRegistryKeys { ed25519: Ed25519KeyPair::from_pkcs8(Input::from(&pkcs)).unwrap()}
     }
 }
 
-pub fn generate_initial_keypair() -> VoterRegistryKeys {
-    let random = SystemRandom::new();
-
-    let pkcs = Ed25519KeyPair::generate_pkcs8(&random).unwrap();
-
-    VoterRegistryKeys { ed25519: Ed25519KeyPair::from_pkcs8(Input::from(&pkcs)).unwrap()}
-}
-
-#[cfg(test)]
-mod tests {
-    #[test]
-    fn it_works() {
-        assert_eq!(2 + 2, 4);
-    }
-}
