@@ -18,6 +18,7 @@ use rocket::outcome::Outcome::Failure;
 use rocket::outcome::Outcome::Success;
 use core::borrow::BorrowMut;
 use std::sync::Mutex;
+use rocket::Response;
 
 
 #[derive(Debug, Deserialize)]
@@ -31,7 +32,7 @@ impl FromDataSimple for SomePublicKey {
     fn from_data(request: &Request, data: Data) -> Outcome<Self, String> {
 
         let mut buffer = String::new();
-        if let Err(e) = data.open().take(256).read_to_string(&mut buffer) {
+        if let Err(e) = data.open().take(1024).read_to_string(&mut buffer) {
            return Failure((Status::InternalServerError, format!("{:?}", e)))
         }
 
@@ -43,21 +44,18 @@ impl FromDataSimple for SomePublicKey {
 }
 
 #[post("/voter_list", data = "<key>")]
-fn register_new_voter(key: SomePublicKey, existing_keys: State<VotersPubKey>) -> &'static str {
-    println!("{:?}", key);
+fn register_new_voter(key: SomePublicKey, existing_keys: State<VotersPubKey>) -> Response {
+    existing_keys.lock().map(|mut keys| keys.push(key));
 
-    existing_keys.lock().map(|mut x| x.push(key));
-
-
-    "well done"
+    Response::new()
 }
 
 #[get("/voter_list")]
-fn index(registry_keys: State<VoterRegistryKeys>) -> Json<RegisteredVoters> {
+fn index(registry_keys: State<VoterRegistryKeys>, existing_keys: State<VotersPubKey>) -> Json<RegisteredVoters> {
 
-    let keys = vec!["ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAINALgioqnUNxPH6VsSlvfibXdXICc1C8u4tJE7aOu9Og"];
+    let keys = existing_keys.lock().unwrap();
 
-    let public_keys: Vec<_> = keys.iter().map(|k| VoterPublicKeys::from(k)).collect();
+    let public_keys: Vec<_> = keys.iter().map(|k| VoterPublicKeys::from(k.value.clone())).collect();
     let signed_keys = registry_keys.sign(&public_keys[..]);
 
     let signature = encode(signed_keys.as_ref());
